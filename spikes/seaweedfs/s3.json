@@ -1,0 +1,11 @@
+{
+  "identities": [
+    {
+      "name": "spike-admin",
+      "credentials": [
+        { "accessKey": "spikekey", "secretKey": "spikesecret" }
+      ],
+      "actions": ["Admin", "Read", "Write", "List", "Tagging"]
+    }
+  ]
+}
