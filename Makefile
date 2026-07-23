@@ -85,6 +85,27 @@ typecheck:
 	@$(NODE) pnpm run typecheck
 
 # -----------------------------------------------------------------------------
+# Runtime de desarrollo (dentro de cak-node)
+# -----------------------------------------------------------------------------
+
+# Arranca el core (corre sus migraciones forward-only y escucha en :3001)
+run-core:
+	@docker exec -d -u $(shell id -u):$(shell id -g) -e HOME=/tmp \
+		-e CAK_DATABASE_URL=postgresql://cak_user:password@postgres:5432/codealkimia \
+		cak-node sh -c 'cd core && node dist/main.js'
+	@echo "cak-core arrancando en :3001 (interno). Logs: docker exec cak-node sh -c 'true' — usar make stop-core para detener."
+
+# Sirve la consola en http://<host>:4200 (proxy /api → core :3001)
+serve-console:
+	@docker exec -d -u $(shell id -u):$(shell id -g) -e HOME=/tmp \
+		cak-node sh -c 'cd console && node_modules/.bin/ng serve --host 0.0.0.0 --port 4200'
+	@echo "Consola sirviéndose en http://localhost:4200 (o http://macpro:4200)."
+
+stop-dev:
+	@docker exec -u root cak-node sh -c 'pkill -f "dist/main.js" || true; pkill -f "ng serve" || true'
+	@echo "Procesos de desarrollo detenidos."
+
+# -----------------------------------------------------------------------------
 # Shells de utilidad
 # -----------------------------------------------------------------------------
 

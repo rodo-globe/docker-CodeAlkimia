@@ -284,6 +284,8 @@ services:
     image: cak-node:local
     container_name: cak-node
     working_dir: /workspace
+    ports:
+      - "4200:4200"   # ng serve de la consola (make serve-console)
     environment:
       COREPACK_HOME: /cache/corepack
       COREPACK_ENABLE_DOWNLOAD_PROMPT: "0"
