@@ -287,7 +287,9 @@ services:
     environment:
       COREPACK_HOME: /cache/corepack
       COREPACK_ENABLE_DOWNLOAD_PROMPT: "0"
-      npm_config_store_dir: /cache/pnpm-store
+      # El store de pnpm vive DENTRO del workspace (gitignored): pnpm necesita
+      # hardlinks entre store y node_modules, imposibles entre bind mounts distintos.
+      npm_config_store_dir: /workspace/.pnpm-store
     volumes:
       - ../codealkimia:/workspace
       - ./node-cache:/cache
