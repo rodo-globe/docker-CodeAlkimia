@@ -280,7 +280,8 @@ services:
   # Cache de pnpm/corepack en ./node-cache (bind, gitignored, owned por el user).
   # ---------------------------------------------------------------------------
   cak-node:
-    image: node:22-bookworm
+    build: ./node
+    image: cak-node:local
     container_name: cak-node
     working_dir: /workspace
     environment:

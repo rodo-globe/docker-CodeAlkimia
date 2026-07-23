@@ -7,7 +7,7 @@
 # =============================================================================
 
 .PHONY: help up down down-wipe ps logs unseal \
-        build install test shell-node
+        build install arch test typecheck shell-node
 
 COMPOSE := docker compose
 
@@ -29,8 +29,10 @@ help:
 	@echo ""
 	@echo "Build del monorepo (corre dentro de cak-node):"
 	@echo "  make install          pnpm install"
-	@echo "  make build            pnpm install + build de todos los paquetes"
-	@echo "  make test             pnpm test de todos los paquetes"
+	@echo "  make build            arquitectura (dependency-cruiser) + build de todos los paquetes"
+	@echo "  make arch             solo la verificación de arquitectura"
+	@echo "  make test             tests (Vitest) de todos los paquetes"
+	@echo "  make typecheck        tsc --noEmit de todos los paquetes"
 	@echo ""
 	@echo "Shells de utilidad:"
 	@echo "  make shell-node       Shell en el container cak-node"
@@ -61,19 +63,26 @@ unseal:
 	@docker exec cak-openbao sh /openbao/unseal.sh
 
 # -----------------------------------------------------------------------------
-# Build del monorepo (en container cak-node)
-# Mientras el monorepo no exista (llega en US-002), los targets informan el
-# estado del contenedor de build y salen limpio.
+# Build del monorepo (en container cak-node; pnpm vía corepack, versión fijada
+# por el packageManager del package.json raíz)
 # -----------------------------------------------------------------------------
 
 install:
-	@$(NODE) sh -c 'if [ -f package.json ]; then corepack pnpm install; else echo "placeholder US-002: aun no hay monorepo en /workspace. Contenedor de build OK (node $$(node --version), pnpm $$(corepack pnpm --version))."; fi'
+	@$(NODE) pnpm install
 
+# `pnpm run build` = verificación de arquitectura (dependency-cruiser) + build
+# de todos los paquetes. Una violación de límites ROMPE el build.
 build:
-	@$(NODE) sh -c 'if [ -f package.json ]; then corepack pnpm install && corepack pnpm -r build; else echo "placeholder US-002: aun no hay monorepo en /workspace. Contenedor de build OK (node $$(node --version), pnpm $$(corepack pnpm --version))."; fi'
+	@$(NODE) sh -c 'pnpm install && pnpm run build'
+
+arch:
+	@$(NODE) pnpm run arch
 
 test:
-	@$(NODE) sh -c 'if [ -f package.json ]; then corepack pnpm -r test; else echo "placeholder US-002: aun no hay monorepo en /workspace."; fi'
+	@$(NODE) sh -c 'CI=1 pnpm run test'
+
+typecheck:
+	@$(NODE) pnpm run typecheck
 
 # -----------------------------------------------------------------------------
 # Shells de utilidad
