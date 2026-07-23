@@ -1,0 +1,29 @@
+# Alertmanager — ruteo de alertas de CodeAlkimia
+#
+# Detectar (Prometheus) y avisar (acá) van separados: cambiar destinatarios
+# no toca las reglas. En dev el correo lo captura Mailpit (sin salir a Internet);
+# en producción se cambia smtp_smarthost a un relay real y smtp_require_tls a true.
+
+global:
+  smtp_smarthost: 'mailpit:1025'
+  smtp_from: 'alertas@codealkimia.local'
+  smtp_require_tls: false   # Mailpit en dev no usa TLS; en prod va en true
+
+route:
+  receiver: ops-email
+  group_by: ['alertname', 'service']
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 12h
+
+receivers:
+  - name: ops-email
+    email_configs:
+      - to: 'plataforma@codealkimia.local'
+        send_resolved: true
+
+inhibit_rules:
+  # Con una critical activa de un servicio, silenciar las warning hermanas.
+  - source_matchers: [ severity = critical ]
+    target_matchers: [ severity = warning ]
+    equal: ['service']

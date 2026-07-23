@@ -1,0 +1,11 @@
+{
+  "identities": [
+    {
+      "name": "cak-core",
+      "credentials": [
+        { "accessKey": "cak-dev-key", "secretKey": "cak-dev-secret" }
+      ],
+      "actions": ["Admin", "Read", "Write", "List", "Tagging"]
+    }
+  ]
+}

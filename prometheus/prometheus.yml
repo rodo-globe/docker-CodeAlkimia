@@ -1,0 +1,94 @@
+# Prometheus — configuración de CodeAlkimia (desarrollo)
+#
+# Cobertura sin puntos ciegos: base, object storage, bóveda, host, contenedores
+# y el propio monitoreo. La app (cak-core) se suma cuando exista (US-003).
+# Tras editar este archivo: `docker compose restart prometheus` (gotcha del inode
+# con bind-mounts de archivos sueltos — no confiar en hot-reload).
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    environment: dev
+    cluster: docker-codealkimia
+
+rule_files:
+  - /etc/prometheus/alert-rules.yml
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - alertmanager:9093
+
+scrape_configs:
+  # El propio monitoreo
+  - job_name: prometheus
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: alertmanager
+    static_configs:
+      - targets: ['alertmanager:9093']
+        labels:
+          service: alertmanager
+
+  - job_name: grafana
+    static_configs:
+      - targets: ['grafana:3000']
+        labels:
+          service: grafana
+
+  # --- Aplicación CodeAlkimia (se habilita en US-003, cuando exista el core) ---
+  # - job_name: cak-core
+  #   metrics_path: /metrics
+  #   scrape_interval: 10s
+  #   static_configs:
+  #     - targets: ['cak-core:3001']
+  #       labels:
+  #         service: cak
+  #         component: core
+
+  # --- Datos ---
+  # PostgreSQL vía exporter. Señales: up{job=postgres} = el exporter responde;
+  # pg_up = el exporter pudo conectarse a la base (la que usa la alerta).
+  - job_name: postgres
+    static_configs:
+      - targets: ['postgres-exporter:9187']
+        labels:
+          service: postgres
+
+  # SeaweedFS: métricas Prometheus nativas (sin exporter)
+  - job_name: seaweedfs
+    static_configs:
+      - targets: ['seaweedfs:9324']
+        labels:
+          service: seaweedfs
+
+  # OpenBao: telemetría nativa sobre HTTPS (cert self-signed de dev)
+  - job_name: openbao
+    scheme: https
+    metrics_path: /v1/sys/metrics
+    params:
+      format: ['prometheus']
+    tls_config:
+      insecure_skip_verify: true
+    static_configs:
+      - targets: ['openbao:8200']
+        labels:
+          service: openbao
+
+  # --- Infraestructura ---
+  # Host: CPU, RAM, disco, red
+  - job_name: node
+    static_configs:
+      - targets: ['node-exporter:9100']
+        labels:
+          service: host
+
+  # Uso por contenedor
+  - job_name: cadvisor
+    static_configs:
+      - targets: ['cadvisor:8080']
+        labels:
+          service: containers

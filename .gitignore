@@ -1,0 +1,10 @@
+# Config de entorno activa (se genera desde dev.env o prod.env)
+.env
+prod.env
+
+# Secretos y certificados de OpenBao (dev: generados por bootstrap/gen-tls)
+openbao/.secrets/
+openbao/tls/
+
+# Cache de dependencias del contenedor de build (owned por el usuario del host)
+node-cache/

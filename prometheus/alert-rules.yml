@@ -1,0 +1,80 @@
+# Reglas de alerting de CodeAlkimia — desarrollo
+#
+# Umbrales en valores razonables de producción; en dev rara vez disparan.
+# Anatomía: expr (PromQL) + for (sostenida) + severity (critical inhibe warning
+# del mismo servicio) + service (agrupamiento). Tras editar: restart prometheus.
+
+groups:
+
+  - name: cak-availability
+    interval: 30s
+    rules:
+      - alert: PostgresDown
+        expr: pg_up == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: postgres
+        annotations:
+          summary: "PostgreSQL no responde"
+          description: "El exporter está vivo pero no logra conectarse a la base hace 1 minuto."
+
+      - alert: PostgresExporterDown
+        expr: up{job="postgres"} == 0
+        for: 2m
+        labels:
+          severity: warning
+          service: postgres
+        annotations:
+          summary: "postgres-exporter no responde al scrape"
+
+      - alert: SeaweedFSDown
+        expr: up{job="seaweedfs"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: seaweedfs
+        annotations:
+          summary: "SeaweedFS (object storage) no responde"
+          description: "Sin object storage no hay artefactos: código, evidencia y golden masters inaccesibles."
+
+      - alert: OpenBaoDown
+        expr: up{job="openbao"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: openbao
+        annotations:
+          summary: "OpenBao no responde (¿caído o sellado?)"
+          description: "Tras un reinicio OpenBao arranca sellado y no expone métricas. En dev: make unseal."
+
+  - name: cak-resources
+    interval: 1m
+    rules:
+      - alert: HostMemoryHigh
+        expr: (1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) > 0.90
+        for: 10m
+        labels:
+          severity: warning
+          service: host
+        annotations:
+          summary: "Memoria del host > 90%"
+
+      - alert: HostDiskSpaceLow
+        expr: (node_filesystem_avail_bytes{fstype!~"tmpfs|overlay"} / node_filesystem_size_bytes{fstype!~"tmpfs|overlay"}) < 0.10
+        for: 5m
+        labels:
+          severity: warning
+          service: host
+        annotations:
+          summary: "Menos del 10% de disco libre en {{ $labels.mountpoint }}"
+          description: "El object storage y Postgres viven acá: atender antes de que se llene."
+
+  # --- Se habilitan cuando exista la app (US-003+) ---
+  # - name: cak-service
+  #   rules:
+  #     - alert: CakCoreDown           → up{job="cak-core"} == 0
+  #     - alert: CakQueueStalled       → tareas elegibles sin despachar por N min
+  #     - alert: CakTaskFailureHigh    → tasa de fallo de tareas agénticas
+  #     - alert: CakLedgerIntegrityBroken → gauge del self-check > 0; critical, SIN `for`
+  #       (dispara de inmediato — precedente MtfAuditIntegrityBroken)
