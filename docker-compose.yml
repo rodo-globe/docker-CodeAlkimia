@@ -292,6 +292,9 @@ services:
       # El store de pnpm vive DENTRO del workspace (gitignored): pnpm necesita
       # hardlinks entre store y node_modules, imposibles entre bind mounts distintos.
       npm_config_store_dir: /workspace/.pnpm-store
+      # Tests de integración: URL del owner al Postgres del compose. Los IT crean
+      # una base efímera por corrida; sin esta variable se saltean limpio.
+      CAK_TEST_OWNER_PG_URL: postgresql://cak_user:password@postgres:5432/codealkimia
     volumes:
       - ../codealkimia:/workspace
       - ./node-cache:/cache

@@ -88,10 +88,11 @@ typecheck:
 # Runtime de desarrollo (dentro de cak-node)
 # -----------------------------------------------------------------------------
 
-# Arranca el core (corre sus migraciones forward-only y escucha en :3001)
+# Arranca el core: migraciones como owner, app como cak_app (RLS aplica)
 run-core:
 	@docker exec -d -u $(shell id -u):$(shell id -g) -e HOME=/tmp \
-		-e CAK_DATABASE_URL=postgresql://cak_user:password@postgres:5432/codealkimia \
+		-e CAK_DATABASE_URL=postgresql://cak_app:app_password@postgres:5432/codealkimia \
+		-e CAK_OWNER_DATABASE_URL=postgresql://cak_user:password@postgres:5432/codealkimia \
 		cak-node sh -c 'cd core && node dist/main.js'
 	@echo "cak-core arrancando en :3001 (interno). Logs: docker exec cak-node sh -c 'true' — usar make stop-core para detener."
 
