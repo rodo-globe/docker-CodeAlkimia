@@ -102,7 +102,7 @@ serve-console:
 	@echo "Consola sirviéndose en http://localhost:4200 (o http://macpro:4200)."
 
 stop-dev:
-	@docker exec -u root cak-node sh -c 'pkill -f "dist/main.js" || true; pkill -f "ng serve" || true'
+	@docker exec -u root cak-node sh -c 'pkill -f "node dist/mai[n].js" || true; pkill -f "ng serv[e]" || true; true'
 	@echo "Procesos de desarrollo detenidos."
 
 # -----------------------------------------------------------------------------
